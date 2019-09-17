@@ -23,7 +23,6 @@ import org.apache.logging.log4j.ThreadContext;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -41,7 +40,7 @@ public class LogEventFactoryInterceptorTest {
         LogEventFactoryInterceptor interceptor = new LogEventFactoryInterceptor(traceContext);
         interceptor.before(null);
         interceptor.after(null, null, null);
-        Assert.assertTrue(ThreadContext.get(TRANSACTION_ID) == null);
+        Assert.assertNull(ThreadContext.get(TRANSACTION_ID));
     }
 
     @Test
@@ -57,6 +56,6 @@ public class LogEventFactoryInterceptorTest {
         LogEventFactoryInterceptor interceptor = spy(new LogEventFactoryInterceptor(traceContext));
         interceptor.before(null);
         interceptor.after(null, null, null);
-        Assert.assertTrue(ThreadContext.get(TRANSACTION_ID) != null);
+        Assert.assertNotNull(ThreadContext.get(TRANSACTION_ID));
     }
 }

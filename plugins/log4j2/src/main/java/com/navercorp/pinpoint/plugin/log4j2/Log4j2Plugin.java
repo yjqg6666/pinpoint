@@ -23,7 +23,6 @@ import com.navercorp.pinpoint.bootstrap.instrument.Instrumentor;
 import com.navercorp.pinpoint.bootstrap.instrument.transformer.TransformCallback;
 import com.navercorp.pinpoint.bootstrap.instrument.transformer.TransformTemplate;
 import com.navercorp.pinpoint.bootstrap.instrument.transformer.TransformTemplateAware;
-import com.navercorp.pinpoint.bootstrap.interceptor.Interceptor;
 import com.navercorp.pinpoint.bootstrap.interceptor.scope.ExecutionPolicy;
 import com.navercorp.pinpoint.bootstrap.logging.PLogger;
 import com.navercorp.pinpoint.bootstrap.logging.PLoggerFactory;
@@ -40,6 +39,8 @@ public class Log4j2Plugin implements ProfilerPlugin, TransformTemplateAware {
 
     private final PLogger logger = PLoggerFactory.getLogger(getClass());
 
+    private static final String INTERCEPTOR_CLASS = "com.navercorp.pinpoint.plugin.log4j2.interceptor.LogEventFactoryInterceptor";
+
     private TransformTemplate transformTemplate;
 
     @Override
@@ -55,11 +56,11 @@ public class Log4j2Plugin implements ProfilerPlugin, TransformTemplateAware {
         }
 
         //for case : use SyncAppdender, use AsyncAppender, use Mixing Synchronous and Asynchronous Loggers
-        transformTemplate.transform("org.apache.logging.log4j.core.impl.DefaultLogEventFactory", DefaultLogEventFactoryTransform.class);
-        transformTemplate.transform("org.apache.logging.log4j.core.impl.ReusableLogEventFactory", ReusableLogEventFactoryTransform.class);
+        transformTemplate.transform("org.apache.logging.log4j.core.impl.DefaultLogEventFactory", new DefaultLogEventFactoryTransform());
+        transformTemplate.transform("org.apache.logging.log4j.core.impl.ReusableLogEventFactory", new ReusableLogEventFactoryTransform());
 
         //for case : Making All Loggers Asynchronous
-        transformTemplate.transform("org.apache.logging.log4j.core.async.RingBufferLogEventTranslator", RingBufferLogEventTranslatorTransform.class);
+        transformTemplate.transform("org.apache.logging.log4j.core.async.RingBufferLogEventTranslator", new RingBufferLogEventTranslatorTransform());
 
     }
 
@@ -67,19 +68,17 @@ public class Log4j2Plugin implements ProfilerPlugin, TransformTemplateAware {
 
         @Override
         public byte[] doInTransform(Instrumentor instrumentor, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws InstrumentException {
-            if (valicateThreadContextMethod(instrumentor, loader) == false) {
+            if (!validateThreadContextMethod(instrumentor, loader)) {
                 return null;
             }
 
             InstrumentClass target = instrumentor.getInstrumentClass(loader, className, classfileBuffer);
-            final Class<? extends Interceptor> interceptorClassName = LogEventFactoryInterceptor.class;
-
-            addInterceptor(target,"createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, interceptorClassName);
-            addInterceptor(target,"createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "java.lang.StackTraceElement","org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, interceptorClassName);
+            addInterceptor(target,"createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, INTERCEPTOR_CLASS);
+            addInterceptor(target,"createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "java.lang.StackTraceElement","org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, INTERCEPTOR_CLASS);
             return target.toBytecode();
         }
 
-        private void addInterceptor(InstrumentClass target, String methodName, String[] parameterTypes, Class<? extends Interceptor> interceptorClassName) throws InstrumentException {
+        private void addInterceptor(InstrumentClass target, String methodName, String[] parameterTypes, String interceptorClassName) throws InstrumentException {
             InstrumentMethod method = target.getDeclaredMethod(methodName, parameterTypes);
             if (method != null) {
                 method.addInterceptor(interceptorClassName);
@@ -91,19 +90,17 @@ public class Log4j2Plugin implements ProfilerPlugin, TransformTemplateAware {
 
         @Override
         public byte[] doInTransform(Instrumentor instrumentor, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws InstrumentException {
-            if (valicateThreadContextMethod(instrumentor, loader) == false) {
+            if (!validateThreadContextMethod(instrumentor, loader)) {
                 return null;
             }
 
             InstrumentClass target = instrumentor.getInstrumentClass(loader, className, classfileBuffer);
-            final Class<? extends Interceptor> interceptorClassName = LogEventFactoryInterceptor.class;
-
-            addInterceptor(target, "createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, interceptorClassName);
-            addInterceptor(target, "createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "java.lang.StackTraceElement", "org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, interceptorClassName);
+            addInterceptor(target, "createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, INTERCEPTOR_CLASS);
+            addInterceptor(target, "createEvent", new String[]{"java.lang.String", "org.apache.logging.log4j.Marker", "java.lang.String", "java.lang.StackTraceElement", "org.apache.logging.log4j.Level", "org.apache.logging.log4j.message.Message", "java.util.List", "java.lang.Throwable"}, INTERCEPTOR_CLASS);
             return target.toBytecode();
         }
 
-        private void addInterceptor(InstrumentClass target, String methodName, String[] parameterTypes, Class<? extends Interceptor> interceptorClassName) throws InstrumentException {
+        private void addInterceptor(InstrumentClass target, String methodName, String[] parameterTypes, String interceptorClassName) throws InstrumentException {
             InstrumentMethod method = target.getDeclaredMethod(methodName, parameterTypes);
             if (method != null) {
                 method.addScopedInterceptor(interceptorClassName, Log4j2Config.REUSABLELOGEVENTFACTORY_SCOPE, ExecutionPolicy.BOUNDARY);
@@ -115,18 +112,16 @@ public class Log4j2Plugin implements ProfilerPlugin, TransformTemplateAware {
 
         @Override
         public byte[] doInTransform(Instrumentor instrumentor, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws InstrumentException {
-            if (valicateThreadContextMethod(instrumentor, loader) == false) {
+            if (!validateThreadContextMethod(instrumentor, loader)) {
                 return null;
             }
 
             InstrumentClass target = instrumentor.getInstrumentClass(loader, className, classfileBuffer);
-            final Class<? extends Interceptor> interceptorClassName = LogEventFactoryInterceptor.class;
-
-            addInterceptor(target, "translateTo", new String[]{"org.apache.logging.log4j.core.async.RingBufferLogEvent", "long"}, interceptorClassName);
+            addInterceptor(target, "translateTo", new String[]{"org.apache.logging.log4j.core.async.RingBufferLogEvent", "long"}, INTERCEPTOR_CLASS);
             return target.toBytecode();
         }
 
-        private void addInterceptor(InstrumentClass target, String methodName, String[] parameterTypes, Class<? extends Interceptor> interceptorClassName) throws InstrumentException {
+        private void addInterceptor(InstrumentClass target, String methodName, String[] parameterTypes, String interceptorClassName) throws InstrumentException {
             InstrumentMethod method = target.getDeclaredMethod(methodName, parameterTypes);
             if (method != null) {
                 method.addInterceptor(interceptorClassName);
@@ -134,10 +129,11 @@ public class Log4j2Plugin implements ProfilerPlugin, TransformTemplateAware {
         }
     }
 
-    public static abstract class LogEventFactoryTransform implements TransformCallback {
+    static abstract class LogEventFactoryTransform implements TransformCallback {
+
         private final PLogger logger = PLoggerFactory.getLogger(this.getClass());
 
-        protected boolean valicateThreadContextMethod(Instrumentor instrumentor, ClassLoader loader) {
+        boolean validateThreadContextMethod(Instrumentor instrumentor, ClassLoader loader) {
             InstrumentClass mdcClass = instrumentor.getInstrumentClass(loader, "org.apache.logging.log4j.ThreadContext", null);
 
             if (mdcClass == null) {
