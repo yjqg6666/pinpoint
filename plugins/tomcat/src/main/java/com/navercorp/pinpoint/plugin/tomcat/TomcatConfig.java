@@ -32,6 +32,9 @@ public class TomcatConfig {
     private final boolean enable;
     private final List<String> bootstrapMains;
     private final boolean hidePinpointHeader;
+    private final boolean responseTraceIdHeader;
+    private final String responseTraceIdHeaderName;
+    private final boolean encodeTraceIdHeader;
 
     private final boolean traceRequestParam;
     private final Filter<String> excludeUrlFilter;
@@ -53,6 +56,9 @@ public class TomcatConfig {
         this.realIpHeader = serverConfig.getRealIpHeader("profiler.tomcat.realipheader");
         this.realIpEmptyValue = serverConfig.getRealIpEmptyValue("profiler.tomcat.realipemptyvalue");
         this.excludeProfileMethodFilter = serverConfig.getExcludeMethodFilter("profiler.tomcat.excludemethod");
+        this.responseTraceIdHeader = config.readBoolean("profiler.tomcat.response-trace-header", false);
+        this.responseTraceIdHeaderName = config.readString("profiler.tomcat.response-trace-header-name", "X-Trace-Id");
+        this.encodeTraceIdHeader = config.readBoolean("profiler.tomcat.encode-trace-header", true);
     }
 
     public boolean isEnable() {
@@ -65,6 +71,18 @@ public class TomcatConfig {
 
     public boolean isHidePinpointHeader() {
         return hidePinpointHeader;
+    }
+
+    public boolean isResponseTraceIdHeader() {
+        return responseTraceIdHeader;
+    }
+
+    public String getResponseTraceIdHeaderName() {
+        return responseTraceIdHeaderName;
+    }
+
+    public boolean isEncodeTraceIdHeader() {
+        return encodeTraceIdHeader;
     }
 
     public boolean isTraceRequestParam() {
@@ -93,6 +111,9 @@ public class TomcatConfig {
         sb.append("enable=").append(enable);
         sb.append(", bootstrapMains=").append(bootstrapMains);
         sb.append(", hidePinpointHeader=").append(hidePinpointHeader);
+        sb.append(", responseTraceIdHeader=").append(responseTraceIdHeader);
+        sb.append(", responseTraceIdHeaderName=").append(responseTraceIdHeaderName);
+        sb.append(", encodeTraceIdHeader=").append(encodeTraceIdHeader);
         sb.append(", traceRequestParam=").append(traceRequestParam);
         sb.append(", excludeUrlFilter=").append(excludeUrlFilter);
         sb.append(", realIpHeader='").append(realIpHeader).append('\'');

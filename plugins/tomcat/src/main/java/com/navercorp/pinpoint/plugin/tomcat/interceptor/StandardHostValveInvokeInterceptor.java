@@ -18,7 +18,9 @@ package com.navercorp.pinpoint.plugin.tomcat.interceptor;
 
 import com.navercorp.pinpoint.bootstrap.config.ProfilerConfig;
 import com.navercorp.pinpoint.bootstrap.context.MethodDescriptor;
+import com.navercorp.pinpoint.bootstrap.context.Trace;
 import com.navercorp.pinpoint.bootstrap.context.TraceContext;
+import com.navercorp.pinpoint.bootstrap.context.TraceId;
 import com.navercorp.pinpoint.bootstrap.interceptor.AroundInterceptor;
 import com.navercorp.pinpoint.bootstrap.logging.PLogger;
 import com.navercorp.pinpoint.bootstrap.logging.PLoggerFactory;
@@ -35,6 +37,7 @@ import com.navercorp.pinpoint.bootstrap.plugin.response.ServletResponseListenerB
 import com.navercorp.pinpoint.bootstrap.plugin.uri.UriStatRecorder;
 import com.navercorp.pinpoint.bootstrap.plugin.uri.UriStatRecorderFactory;
 import com.navercorp.pinpoint.plugin.common.servlet.ServletRequestUriExtractorService;
+import com.navercorp.pinpoint.common.Charsets;
 import com.navercorp.pinpoint.plugin.common.servlet.util.ArgumentValidator;
 import com.navercorp.pinpoint.plugin.common.servlet.util.HttpServletRequestAdaptor;
 import com.navercorp.pinpoint.plugin.common.servlet.util.HttpServletResponseAdaptor;
@@ -47,6 +50,7 @@ import org.apache.catalina.connector.Response;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
 
 /**
  * @author emeroad
@@ -59,6 +63,8 @@ public class StandardHostValveInvokeInterceptor implements AroundInterceptor {
 
     private final MethodDescriptor methodDescriptor;
     private final ArgumentValidator argumentValidator;
+    private final TraceContext traceContext;
+    private final TomcatConfig tomcatConfig;
 
     private final ServletRequestListener<HttpServletRequest> servletRequestListener;
     private final ServletResponseListener<HttpServletResponse> servletResponseListener;
@@ -91,6 +97,8 @@ public class StandardHostValveInvokeInterceptor implements AroundInterceptor {
         this.servletRequestListener = reqBuilder.build();
 
         this.servletResponseListener = new ServletResponseListenerBuilder<>(traceContext, new HttpServletResponseAdaptor()).build();
+        this.tomcatConfig = config;
+        this.traceContext = traceContext;
     }
 
     @Override
@@ -116,6 +124,20 @@ public class StandardHostValveInvokeInterceptor implements AroundInterceptor {
             final HttpServletResponse response = (HttpServletResponse) args[1];
             this.servletRequestListener.initialized(request, TomcatConstants.TOMCAT_METHOD, this.methodDescriptor);
             this.servletResponseListener.initialized(response, TomcatConstants.TOMCAT_METHOD, this.methodDescriptor); //must after request listener due to trace block begin
+            if (tomcatConfig.isResponseTraceIdHeader()) {
+                Trace currentTraceObject = traceContext.currentTraceObject();
+                if (currentTraceObject!= null) {
+                    TraceId traceId = currentTraceObject.getTraceId();
+                    if (traceId == null) {
+                        return;
+                    }
+                    String txId = traceId.getTransactionId();
+                    if (tomcatConfig.isEncodeTraceIdHeader()) {
+                        txId = URLEncoder.encode(txId, Charsets.US_ASCII_NAME);
+                    }
+                    response.setHeader(tomcatConfig.getResponseTraceIdHeaderName(), txId);
+                }
+            }
         } catch (Throwable t) {
             if (isInfo) {
                 logger.info("Failed to servlet request event handle.", t);
