@@ -94,7 +94,7 @@ public interface AgentInfoMapper {
 
     @Named("agentVersion")
     default String agentVersion(AgentInfo agentInfo) {
-        return Version.VERSION;
+        return agentInfo.getAgentInformation().getAgentVersion();
     }
 
 }
