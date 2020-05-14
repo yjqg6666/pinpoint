@@ -15,6 +15,8 @@
 package com.navercorp.pinpoint.bootstrap;
 
 import com.navercorp.pinpoint.ProductInfo;
+import com.navercorp.pinpoint.bootstrap.agentdir.AgentBuildInfoHolder;
+import com.navercorp.pinpoint.bootstrap.agentdir.AgentBuildInfoResolver;
 import com.navercorp.pinpoint.bootstrap.agentdir.AgentDirectory;
 import com.navercorp.pinpoint.bootstrap.agentdir.LogDirCleaner;
 import com.navercorp.pinpoint.bootstrap.banner.PinpointBannerImpl;
@@ -127,6 +129,9 @@ class PinpointStarter {
 
             cleanLogDir(agentDirectory.getAgentLogFilePath(), profilerConfig);
 
+            // parse agent build.info
+            parseAgentBuildInfo(agentDirectory);
+
             // this is the library list that must be loaded
             URL[] urls = resolveLib(agentDirectory);
             List<String> agentClassloaderLibs = getAgentClassloaderLibs(profilerConfig);
@@ -180,6 +185,11 @@ class PinpointStarter {
         logger.info("Log directory maxbackupsize=" + logDirMaxBackupSize);
         LogDirCleaner logDirCleaner = new LogDirCleaner(agentLogFilePath, logDirMaxBackupSize);
         logDirCleaner.clean();
+    }
+
+    private void parseAgentBuildInfo(AgentDirectory agentDirectory) {
+        AgentBuildInfoResolver agentBuildInfoResolver = new AgentBuildInfoResolver(agentDirectory);
+        AgentBuildInfoHolder.set(agentBuildInfoResolver.resolve());
     }
 
     private AgentIds resolveAgentIds() {
