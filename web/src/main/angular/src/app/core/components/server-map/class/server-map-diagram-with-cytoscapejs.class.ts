@@ -5,7 +5,7 @@ import { mergeMap, map, pluck, switchMap, take, reduce } from 'rxjs/operators';
 
 import ServerMapTheme from './server-map-theme';
 import { ServerMapDiagram } from './server-map-diagram.class';
-import { ServerMapData } from './server-map-data.class';
+import {IShortLinkInfo, ServerMapData} from './server-map-data.class';
 import { IServerMapOption } from './server-map-factory';
 import { ServerMapTemplate } from './server-map-template';
 import { NodeGroup } from './node-group.class';
@@ -153,12 +153,40 @@ export class ServerMapDiagramWithCytoscapejs extends ServerMapDiagram {
         });
     }
 
+    getResponseInfo(linkData: ILinkInfo | IShortLinkInfo): any {
+        if (typeof linkData === "undefined" || !linkData) {
+            return "";
+        }
+        const histogram_error = linkData.histogram ? linkData.histogram.Error : 0;
+        const histogram_avg = linkData.responseStatistics ? linkData.responseStatistics.Avg :0;
+        const histogram_max = linkData.responseStatistics ? linkData.responseStatistics.Max : 0;
+        const tot = histogram_error + histogram_avg + histogram_max;
+        if (isNaN(tot) || tot <= 0) {
+            return "";
+        }
+        let hint = " (";
+        if (histogram_error > 0) {
+            hint += "err:" + histogram_error + " ";
+        }
+        if (histogram_avg > 0) {
+            hint += "avg:" + histogram_avg + "ms ";
+        }
+        if (histogram_max > 0) {
+            hint += "max:" + histogram_max + "ms ";
+        }
+        hint = hint.substring(0, hint.length - 1);
+        return hint + ") ";
+    }
+
+
     setMapData(serverMapData: ServerMapData, baseApplicationKey = ''): void {
         this.serverMapData = serverMapData;
         this.baseApplicationKey = baseApplicationKey;
 
         const edges = serverMapData.getLinkList().map((link: {[key: string]: any}) => {
             const {from, to, key, totalCount, isFiltered, hasAlert} = link;
+            const linkData = serverMapData.getLinkData(key);
+            const responseInfo = this.getResponseInfo(linkData);
 
             return {
                 data: {
@@ -168,7 +196,7 @@ export class ServerMapDiagramWithCytoscapejs extends ServerMapDiagram {
                     // [임시]label에서 이미지를 지원하지않아서, filteredMap페이지에서 필터아이콘을 "Filtered" 텍스트로 대체.
                     // label: isFiltered ? ` [Filtered]\n${totalCount.toLocaleString()} ` : ` ${totalCount.toLocaleString()} `,
                     // TODO: Filter Icon 처리
-                    label: totalCount.toLocaleString(),
+                    label: totalCount.toLocaleString() + responseInfo,
                     hasAlert
                 }
             };
