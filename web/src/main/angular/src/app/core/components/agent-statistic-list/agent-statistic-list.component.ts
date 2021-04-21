@@ -77,11 +77,7 @@ export class AgentStatisticListComponent implements OnInit  {
                     },
                     suppressCount: true
                 },
-                cellStyle: {
-                    color: 'rgb(54, 162, 235)',
-                    'font-weight': 600,
-                    'cursor': 'pointer'
-                },
+                cellStyle: this.cellLinkStyle(),
                 filter: 'agTextColumnFilter',
                 tooltipField: 'application'
             },
@@ -91,15 +87,14 @@ export class AgentStatisticListComponent implements OnInit  {
                 width: 300,
                 filter: 'agTextColumnFilter',
                 tooltipField: 'agent',
-                cellStyle: {
-                    'cursor': 'pointer'
-                }
+                cellStyle: this.cellLinkStyle(),
             },
             {
                 headerName: 'Agent Version',
                 field: 'agentVersion',
                 width: 150,
                 filter: 'agTextColumnFilter',
+                cellStyle: this.cellLinkStyle(),
                 tooltipField: 'agentVersion'
             },
             {
@@ -107,9 +102,18 @@ export class AgentStatisticListComponent implements OnInit  {
                 field: 'jvmVersion',
                 width: 150,
                 filter: 'agTextColumnFilter',
+                cellStyle: this.cellLinkStyle(),
                 tooltipField: 'jvmVersion'
             },
         ];
+    }
+
+    cellLinkStyle(): any {
+       return  {
+           color: 'rgb(54, 162, 235)',
+           'font-weight': 600,
+           'cursor': 'pointer'
+       }
     }
 
     onCellClick(params: any): void {
