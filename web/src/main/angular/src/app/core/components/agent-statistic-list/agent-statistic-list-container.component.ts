@@ -90,6 +90,10 @@ export class AgentStatisticListContainerComponent implements OnInit, OnDestroy {
             });
             this.analyticsService.trackEvent(TRACKED_EVENT_LIST.CLICK_APPLICATION_IN_STATISTIC_LIST);
         } else {
+            const linkable = ['agent', 'agentName'];
+            if (!linkable.includes(params.colDef.field)) {
+               return;
+            }
             const diffMinute = 5;
             const startTime = EndTime.newByNumber(params.data.startTimestamp);
             this.urlRouteManagerService.openPage({
