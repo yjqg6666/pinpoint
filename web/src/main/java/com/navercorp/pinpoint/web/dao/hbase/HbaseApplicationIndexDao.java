@@ -20,6 +20,7 @@ import com.navercorp.pinpoint.common.hbase.HbaseColumnFamily;
 import com.navercorp.pinpoint.common.hbase.HbaseOperations2;
 import com.navercorp.pinpoint.common.hbase.RowMapper;
 import com.navercorp.pinpoint.common.hbase.TableDescriptor;
+import com.navercorp.pinpoint.common.trace.ServiceType;
 import com.navercorp.pinpoint.web.dao.ApplicationIndexDao;
 import com.navercorp.pinpoint.web.util.ListListUtils;
 import com.navercorp.pinpoint.web.vo.Application;
@@ -67,14 +68,9 @@ public class HbaseApplicationIndexDao implements ApplicationIndexDao {
 
     @Override
     public List<Application> selectAllApplicationNames() {
-        Scan scan = new Scan();
-        scan.setCaching(30);
-        scan.addFamily(descriptor.getColumnFamilyName());
-
-        TableName applicationIndexTableName = descriptor.getTableName();
-        List<List<Application>> results = hbaseOperations2.find(applicationIndexTableName, scan, applicationNameMapper);
-
-        return ListListUtils.toList(results);
+        List<Application> list = new ArrayList<>();
+        list.add(new Application("infra-pinpoint-verify", ServiceType.SPRING));
+        return list;
     }
 
     @Override
