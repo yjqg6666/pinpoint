@@ -35,6 +35,9 @@ public class ServletResponseListenerBuilder<RESP> {
                                           final ResponseAdaptor<RESP> responseAdaptor) {
         this.traceContext = Objects.requireNonNull(traceContext, "traceContext");
         this.responseAdaptor = Objects.requireNonNull(responseAdaptor, "responseAdaptor");
+
+        final List<String> recordResponseHeaders = traceContext.getProfilerConfig().readList(ServerResponseHeaderRecorder.CONFIG_KEY_RECORD_RESP_HEADERS);
+        setRecordResponseHeaders(recordResponseHeaders);
     }
 
     public void setRecordResponseHeaders(List<String> recordResponseHeaders) {

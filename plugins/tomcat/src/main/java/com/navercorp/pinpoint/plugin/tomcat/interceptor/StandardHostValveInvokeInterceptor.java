@@ -30,8 +30,6 @@ import com.navercorp.pinpoint.bootstrap.plugin.request.ServerHeaderRecorder;
 import com.navercorp.pinpoint.bootstrap.plugin.request.ServletRequestListener;
 import com.navercorp.pinpoint.bootstrap.plugin.request.ServletRequestListenerBuilder;
 import com.navercorp.pinpoint.bootstrap.plugin.request.util.ParameterRecorder;
-import com.navercorp.pinpoint.bootstrap.plugin.response.ResponseAdaptor;
-import com.navercorp.pinpoint.bootstrap.plugin.response.ServerResponseHeaderRecorder;
 import com.navercorp.pinpoint.bootstrap.plugin.response.ServletResponseListener;
 import com.navercorp.pinpoint.bootstrap.plugin.response.ServletResponseListenerBuilder;
 import com.navercorp.pinpoint.bootstrap.plugin.uri.UriStatRecorder;
@@ -49,7 +47,6 @@ import org.apache.catalina.connector.Response;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * @author emeroad
@@ -92,11 +89,7 @@ public class StandardHostValveInvokeInterceptor implements AroundInterceptor {
 
         this.servletRequestListener = builder.build();
 
-        ResponseAdaptor<HttpServletResponse> responseAdaptor = new HttpServletResponseAdaptor();
-        final ServletResponseListenerBuilder<HttpServletResponse> responseListenerBuilder = new ServletResponseListenerBuilder<>(traceContext, responseAdaptor);
-        final List<String> recordResponseHeaders = profilerConfig.readList(ServerResponseHeaderRecorder.CONFIG_KEY_RECORD_RESP_HEADERS);
-        responseListenerBuilder.setRecordResponseHeaders(recordResponseHeaders);
-        this.servletResponseListener = responseListenerBuilder.build();
+        this.servletResponseListener = new ServletResponseListenerBuilder<HttpServletResponse>(traceContext, new HttpServletResponseAdaptor()).build();
     }
 
     @Override
