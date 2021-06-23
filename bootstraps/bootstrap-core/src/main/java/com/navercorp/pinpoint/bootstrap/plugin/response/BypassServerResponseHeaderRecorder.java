@@ -24,7 +24,7 @@ import com.navercorp.pinpoint.bootstrap.context.SpanRecorder;
 public class BypassServerResponseHeaderRecorder<T> implements ServerResponseHeaderRecorder<T> {
 
     @Override
-    public void recordHeader(SpanRecorder recorder, T request) {
+    public void recordHeader(SpanRecorder recorder, T response) {
         // empty
     }
 
