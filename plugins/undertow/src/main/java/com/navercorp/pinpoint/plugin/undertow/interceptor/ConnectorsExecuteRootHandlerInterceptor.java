@@ -115,7 +115,7 @@ public class ConnectorsExecuteRootHandlerInterceptor implements AroundIntercepto
             final int statusCode = getStatusCode(request);
             this.servletResponseListener.destroyed(request, throwable, statusCode); //must before request listener due to trace block ending
             // TODO Get exception. e.g. request.getAttachment(DefaultResponseListener.EXCEPTION)
-            this.servletRequestListener.destroyed(request, throwable, statusCode);
+            this.servletRequestListener.destroyed(request, throwable, statusCode, false);
         } catch (Throwable t) {
             if (isInfo) {
                 logger.info("Failed to servlet request event handle.", t);

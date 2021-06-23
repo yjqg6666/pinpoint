@@ -16,9 +16,13 @@
 
 package com.navercorp.pinpoint.bootstrap.plugin.response;
 
+import com.navercorp.pinpoint.bootstrap.config.HttpStatusCodeErrors;
+import com.navercorp.pinpoint.bootstrap.config.ProfilerConfig;
 import com.navercorp.pinpoint.bootstrap.context.TraceContext;
+import com.navercorp.pinpoint.bootstrap.plugin.http.HttpStatusCodeRecorder;
 import com.navercorp.pinpoint.common.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,21 +35,36 @@ public class ServletResponseListenerBuilder<RESP> {
 
     private List<String> recordResponseHeaders;
 
+    private HttpStatusCodeErrors httpStatusCodeErrors;
+
     public ServletResponseListenerBuilder(final TraceContext traceContext,
                                           final ResponseAdaptor<RESP> responseAdaptor) {
         this.traceContext = Objects.requireNonNull(traceContext, "traceContext");
         this.responseAdaptor = Objects.requireNonNull(responseAdaptor, "responseAdaptor");
 
-        final List<String> recordResponseHeaders = traceContext.getProfilerConfig().readList(ServerResponseHeaderRecorder.CONFIG_KEY_RECORD_RESP_HEADERS);
+        final ProfilerConfig profilerConfig = traceContext.getProfilerConfig();
+        final List<String> recordResponseHeaders = profilerConfig.readList(ServerResponseHeaderRecorder.CONFIG_KEY_RECORD_RESP_HEADERS);
         setRecordResponseHeaders(recordResponseHeaders);
+        setHttpStatusCodeRecorder(profilerConfig.getHttpStatusCodeErrors());
     }
 
     public void setRecordResponseHeaders(List<String> recordResponseHeaders) {
         this.recordResponseHeaders = recordResponseHeaders;
     }
 
+    public void setHttpStatusCodeRecorder(final HttpStatusCodeErrors httpStatusCodeErrors) {
+        this.httpStatusCodeErrors = httpStatusCodeErrors;
+    }
+
     public ServletResponseListener<RESP> build() {
-        return new ServletResponseListener<RESP>(traceContext, newServerResponseHeaderRecorder());
+        HttpStatusCodeRecorder httpStatusCodeRecorder;
+        if (httpStatusCodeErrors == null) {
+            HttpStatusCodeErrors httpStatusCodeErrors = new HttpStatusCodeErrors(Collections.<String>emptyList());
+            httpStatusCodeRecorder = new HttpStatusCodeRecorder(httpStatusCodeErrors);
+        } else {
+            httpStatusCodeRecorder = new HttpStatusCodeRecorder(httpStatusCodeErrors);
+        }
+        return new ServletResponseListener<RESP>(traceContext, newServerResponseHeaderRecorder(), httpStatusCodeRecorder);
     }
 
     private ServerResponseHeaderRecorder<RESP> newServerResponseHeaderRecorder() {

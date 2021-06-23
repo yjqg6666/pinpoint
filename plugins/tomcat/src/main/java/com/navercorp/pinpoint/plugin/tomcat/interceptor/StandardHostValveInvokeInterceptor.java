@@ -149,7 +149,7 @@ public class StandardHostValveInvokeInterceptor implements AroundInterceptor {
                 }
             }
             this.servletResponseListener.destroyed(response, throwable, statusCode); //must before request listener due to trace block ending
-            this.servletRequestListener.destroyed(request, throwable, statusCode);
+            this.servletRequestListener.destroyed(request, throwable, statusCode, false);
         } catch (Throwable t) {
             if (isInfo) {
                 logger.info("Failed to servlet request event handle.", t);
