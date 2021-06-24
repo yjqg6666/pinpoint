@@ -16,7 +16,7 @@
 
 package com.navercorp.pinpoint.bootstrap.plugin.response;
 
-import com.navercorp.pinpoint.bootstrap.context.SpanRecorder;
+import com.navercorp.pinpoint.bootstrap.context.SpanCommonRecorder;
 import com.navercorp.pinpoint.common.trace.AnnotationKey;
 import com.navercorp.pinpoint.common.util.StringStringValue;
 
@@ -39,7 +39,7 @@ public class DefaultServerResponseHeaderRecorder<RESP> implements ServerResponse
     }
 
     @Override
-    public void recordHeader(final SpanRecorder recorder, final RESP response) {
+    public void recordHeader(final SpanCommonRecorder recorder, final RESP response) {
 
         for (String headerName : recordHeaders) {
             final Collection<String> headers = responseAdaptor.getHeaders(response, headerName);

@@ -16,12 +16,12 @@
 
 package com.navercorp.pinpoint.bootstrap.plugin.response;
 
-import com.navercorp.pinpoint.bootstrap.context.SpanRecorder;
+import com.navercorp.pinpoint.bootstrap.context.SpanCommonRecorder;
 
 public interface ServerResponseHeaderRecorder<RESP> {
 
     String CONFIG_KEY_RECORD_RESP_HEADERS = "profiler.http.record.response.headers";
 
-    void recordHeader(SpanRecorder recorder, RESP response);
+    void recordHeader(SpanCommonRecorder recorder, RESP response);
 
 }
