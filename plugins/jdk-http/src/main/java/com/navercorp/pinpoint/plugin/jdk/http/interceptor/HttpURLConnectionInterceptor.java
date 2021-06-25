@@ -22,6 +22,8 @@ import com.navercorp.pinpoint.bootstrap.interceptor.scope.InterceptorScope;
 import com.navercorp.pinpoint.bootstrap.logging.PLogger;
 import com.navercorp.pinpoint.bootstrap.logging.PLoggerFactory;
 import com.navercorp.pinpoint.bootstrap.plugin.request.*;
+import com.navercorp.pinpoint.bootstrap.plugin.response.ResponseHeaderRecorderFactory;
+import com.navercorp.pinpoint.bootstrap.plugin.response.ServerResponseHeaderRecorder;
 import com.navercorp.pinpoint.plugin.jdk.http.*;
 
 import java.net.HttpURLConnection;
@@ -40,6 +42,7 @@ public class HttpURLConnectionInterceptor implements AroundInterceptor {
     private final MethodDescriptor descriptor;
     private final InterceptorScope scope;
     private final ClientRequestRecorder<HttpURLConnection> clientRequestRecorder;
+    private final ServerResponseHeaderRecorder<HttpURLConnection> responseHeaderRecorder;
 
     private final RequestTraceWriter<HttpURLConnection> requestTraceWriter;
 
@@ -52,6 +55,7 @@ public class HttpURLConnectionInterceptor implements AroundInterceptor {
 
         ClientRequestAdaptor<HttpURLConnection> clientRequestAdaptor = new JdkHttpClientRequestAdaptor();
         this.clientRequestRecorder = new ClientRequestRecorder<HttpURLConnection>(config.isParam(), clientRequestAdaptor);
+        this.responseHeaderRecorder = ResponseHeaderRecorderFactory.<HttpURLConnection>newResponseHeaderRecorder(traceContext.getProfilerConfig(), new JdkHttpClientResponseAdaptor());
 
         ClientHeaderAdaptor<HttpURLConnection> clientHeaderAdaptor = new HttpURLConnectionClientHeaderAdaptor();
         this.requestTraceWriter = new DefaultRequestTraceWriter<HttpURLConnection>(clientHeaderAdaptor, traceContext);
@@ -139,6 +143,7 @@ public class HttpURLConnectionInterceptor implements AroundInterceptor {
             final HttpURLConnection request = (HttpURLConnection) target;
             if (request != null) {
                 this.clientRequestRecorder.record(recorder, request, throwable);
+                this.responseHeaderRecorder.recordHeader(recorder, request);
             }
         } finally {
             trace.traceBlockEnd();
