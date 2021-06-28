@@ -20,9 +20,12 @@ import com.navercorp.pinpoint.bootstrap.context.MethodDescriptor;
 import com.navercorp.pinpoint.bootstrap.context.SpanEventRecorder;
 import com.navercorp.pinpoint.bootstrap.context.TraceContext;
 import com.navercorp.pinpoint.bootstrap.interceptor.SpanEventSimpleAroundInterceptorForPlugin;
+import com.navercorp.pinpoint.bootstrap.plugin.response.ResponseHeaderRecorderFactory;
+import com.navercorp.pinpoint.bootstrap.plugin.response.ServerResponseHeaderRecorder;
 import com.navercorp.pinpoint.common.trace.AnnotationKey;
 import com.navercorp.pinpoint.plugin.resttemplate.RestTemplateConstants;
 
+import com.navercorp.pinpoint.plugin.resttemplate.RestTemplateResponseHeaderAdaptor;
 import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
@@ -32,8 +35,11 @@ import java.io.IOException;
  */
 public class HttpRequestInterceptor extends SpanEventSimpleAroundInterceptorForPlugin {
 
+    private final ServerResponseHeaderRecorder<ClientHttpResponse> responseHeaderRecorder;
+
     public HttpRequestInterceptor(TraceContext traceContext, MethodDescriptor descriptor) {
         super(traceContext, descriptor);
+        this.responseHeaderRecorder = ResponseHeaderRecorderFactory.<ClientHttpResponse>newResponseHeaderRecorder(traceContext.getProfilerConfig(), new RestTemplateResponseHeaderAdaptor());
     }
 
     @Override
@@ -47,8 +53,9 @@ public class HttpRequestInterceptor extends SpanEventSimpleAroundInterceptorForP
         recorder.recordException(throwable);
 
         if (result instanceof ClientHttpResponse) {
-            int rawStatusCode = ((ClientHttpResponse) result).getRawStatusCode();
-            recorder.recordAttribute(AnnotationKey.HTTP_STATUS_CODE, rawStatusCode);
+            ClientHttpResponse clientHttpResponse = (ClientHttpResponse) result;
+            recorder.recordAttribute(AnnotationKey.HTTP_STATUS_CODE, clientHttpResponse.getRawStatusCode());
+            this.responseHeaderRecorder.recordHeader(recorder, clientHttpResponse);
         }
     }
 
