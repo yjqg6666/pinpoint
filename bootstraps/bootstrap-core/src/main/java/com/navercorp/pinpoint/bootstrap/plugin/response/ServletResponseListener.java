@@ -37,12 +37,15 @@ public class ServletResponseListener<RESP> {
 
     private final TraceContext traceContext;
     private final ServerResponseHeaderRecorder<RESP> serverResponseHeaderRecorder;
+    private final ResponseAdaptor<RESP> responseAdaptor;
     private final HttpStatusCodeRecorder httpStatusCodeRecorder;
 
     public ServletResponseListener(final TraceContext traceContext,
+                                   final ResponseAdaptor<RESP> responseAdaptor,
                                    final ServerResponseHeaderRecorder<RESP> serverResponseHeaderRecorder,
                                   final HttpStatusCodeRecorder httpStatusCodeRecorder) {
         this.traceContext = Objects.requireNonNull(traceContext, "traceContext");
+        this.responseAdaptor = Objects.requireNonNull(responseAdaptor, "responseAdaptor");
         this.serverResponseHeaderRecorder = Objects.requireNonNull(serverResponseHeaderRecorder, "serverResponseHeaderRecorder");
         this.httpStatusCodeRecorder = Objects.requireNonNull(httpStatusCodeRecorder, "statusCodeRecorder");
     }

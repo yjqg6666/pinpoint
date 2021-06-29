@@ -64,7 +64,7 @@ public class ServletResponseListenerBuilder<RESP> {
         } else {
             httpStatusCodeRecorder = new HttpStatusCodeRecorder(httpStatusCodeErrors);
         }
-        return new ServletResponseListener<RESP>(traceContext, newServerResponseHeaderRecorder(), httpStatusCodeRecorder);
+        return new ServletResponseListener<RESP>(traceContext, responseAdaptor, newServerResponseHeaderRecorder(), httpStatusCodeRecorder);
     }
 
     private ServerResponseHeaderRecorder<RESP> newServerResponseHeaderRecorder() {
