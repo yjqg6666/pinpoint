@@ -16,15 +16,19 @@
 
 package com.navercorp.pinpoint.bootstrap.plugin.response;
 
+import com.navercorp.pinpoint.bootstrap.config.ProfilerConfig;
 import com.navercorp.pinpoint.bootstrap.context.MethodDescriptor;
 import com.navercorp.pinpoint.bootstrap.context.SpanRecorder;
 import com.navercorp.pinpoint.bootstrap.context.Trace;
 import com.navercorp.pinpoint.bootstrap.context.TraceContext;
+import com.navercorp.pinpoint.bootstrap.context.TraceId;
 import com.navercorp.pinpoint.bootstrap.logging.PLogger;
 import com.navercorp.pinpoint.bootstrap.logging.PLoggerFactory;
 import com.navercorp.pinpoint.bootstrap.plugin.http.HttpStatusCodeRecorder;
+import com.navercorp.pinpoint.common.Charsets;
 import com.navercorp.pinpoint.common.trace.ServiceType;
 
+import java.net.URLEncoder;
 import java.util.Objects;
 
 /**
@@ -34,6 +38,10 @@ public class ServletResponseListener<RESP> {
 
     private final PLogger logger = PLoggerFactory.getLogger(this.getClass());
     private final boolean isDebug = logger.isDebugEnabled();
+    private final boolean responseTraceIdHeader;
+    private final String responseTraceIdHeaderName;
+    private final boolean responseTraceIdHeaderEncode;
+
 
     private final TraceContext traceContext;
     private final ServerResponseHeaderRecorder<RESP> serverResponseHeaderRecorder;
@@ -48,6 +56,11 @@ public class ServletResponseListener<RESP> {
         this.responseAdaptor = Objects.requireNonNull(responseAdaptor, "responseAdaptor");
         this.serverResponseHeaderRecorder = Objects.requireNonNull(serverResponseHeaderRecorder, "serverResponseHeaderRecorder");
         this.httpStatusCodeRecorder = Objects.requireNonNull(httpStatusCodeRecorder, "statusCodeRecorder");
+
+        final ProfilerConfig config = traceContext.getProfilerConfig();
+        this.responseTraceIdHeader = config.readBoolean("profiler.http.response.trace-header", false);
+        this.responseTraceIdHeaderName = config.readString("profiler.http.response.trace-header-name", "X-Trace-Id");
+        this.responseTraceIdHeaderEncode = config.readBoolean("profiler.http.response.trace-header-encode", true);
     }
 
 
@@ -58,6 +71,9 @@ public class ServletResponseListener<RESP> {
 
         if (isDebug) {
             logger.debug("Initialized responseEvent. response={}, serviceType={}, methodDescriptor={}", response, serviceType, methodDescriptor);
+        }
+        if (responseTraceIdHeader) {
+            addResponseTraceHeader(response);
         }
     }
 
@@ -77,6 +93,26 @@ public class ServletResponseListener<RESP> {
             final SpanRecorder spanRecorder = trace.getSpanRecorder();
             this.httpStatusCodeRecorder.record(spanRecorder, statusCode);
             this.serverResponseHeaderRecorder.recordHeader(spanRecorder, response);
+        }
+    }
+
+    private void addResponseTraceHeader(RESP response) {
+        final Trace trace = this.traceContext.currentRawTraceObject();
+        if (trace == null || !trace.canSampled()) {
+            return;
+        }
+        TraceId traceId = trace.getTraceId();
+        if (traceId == null) {
+            return;
+        }
+        String txId = traceId.getTransactionId();
+        try {
+            if (this.responseTraceIdHeaderEncode) {
+                txId = URLEncoder.encode(txId, Charsets.US_ASCII_NAME);
+            }
+            this.responseAdaptor.addHeader(response, this.responseTraceIdHeaderName, txId);
+        } catch (Exception e) {
+            logger.warn("Add trace header failed, pTxId:{}", txId, e);
         }
     }
 
