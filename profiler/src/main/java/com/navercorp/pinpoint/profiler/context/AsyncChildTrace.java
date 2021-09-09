@@ -16,6 +16,7 @@
 
 package com.navercorp.pinpoint.profiler.context;
 
+import com.navercorp.pinpoint.bootstrap.context.RequestId;
 import com.navercorp.pinpoint.bootstrap.context.SpanEventRecorder;
 import com.navercorp.pinpoint.bootstrap.context.SpanRecorder;
 import com.navercorp.pinpoint.bootstrap.context.Trace;
@@ -53,6 +54,8 @@ public class AsyncChildTrace implements Trace {
 
     private final TraceRoot traceRoot;
     private final LocalAsyncId localAsyncId;
+
+    private RequestId requestId;
 
     public AsyncChildTrace(final TraceRoot traceRoot, CallStack<SpanEvent> callStack, Storage storage, boolean sampling,
                              SpanRecorder spanRecorder, WrappedSpanEventRecorder wrappedSpanEventRecorder, final LocalAsyncId localAsyncId) {
@@ -192,6 +195,16 @@ public class AsyncChildTrace implements Trace {
     @Override
     public TraceId getTraceId() {
         return getTraceRoot().getTraceId();
+    }
+
+    @Override
+    public RequestId getRequestId() {
+        return requestId;
+    }
+
+    @Override
+    public void setRequestId(RequestId id) {
+        this.requestId = id;
     }
 
     @Override
