@@ -121,6 +121,9 @@ public class HttpURLConnectionInterceptor implements AroundInterceptor {
                 this.requestTraceWriter.write(request);
             }
         }
+        if (addRequestHeader) {
+            this.requestTraceWriter.write(request, trace.getRequestId());
+        }
     }
 
     @Override

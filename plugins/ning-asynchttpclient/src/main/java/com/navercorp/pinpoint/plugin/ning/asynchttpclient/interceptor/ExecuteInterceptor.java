@@ -94,6 +94,9 @@ public class ExecuteInterceptor implements AroundInterceptor {
 
         final Request httpRequest = (Request) args[0];
         final boolean sampling = trace.canSampled();
+        if (httpRequest != null) {
+            this.requestTraceWriter.write(httpRequest, trace.getRequestId());
+        }
         if (!sampling) {
             if (httpRequest != null) {
                 this.requestTraceWriter.write(httpRequest);

@@ -106,6 +106,9 @@ public class Http1xClientConnectionCreateRequestInterceptor implements AroundInt
             return;
         }
 
+        if (result instanceof HttpRequest) {
+            requestTraceWriter.write((HttpRequest) result, trace.getRequestId());
+        }
         if (!trace.canSampled()) {
             if (result instanceof HttpRequest) {
                 final HttpRequest request = (HttpRequest) result;

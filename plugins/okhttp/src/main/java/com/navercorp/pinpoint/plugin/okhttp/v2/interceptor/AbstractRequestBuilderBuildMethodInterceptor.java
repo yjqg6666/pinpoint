@@ -71,6 +71,7 @@ public abstract class AbstractRequestBuilderBuildMethodInterceptor implements Ar
             }
 
             final Request.Builder builder = ((Request.Builder) target);
+            this.requestTraceWriter.write(builder, trace.getRequestId());
             if (!trace.canSampled()) {
                 if (builder != null) {
                     this.requestTraceWriter.write(builder);
