@@ -87,11 +87,10 @@ public class DefaultRequestTraceWriter<T> implements RequestTraceWriter<T> {
 
     @Override
     public void write(T header, RequestId requestId) {
-        Objects.requireNonNull(header, "header");
         if (isDebug) {
             logger.debug("Set request Id header. requestId={}, applicationName={}, serverTypeCode={}, applicationNamespace={}", requestId, applicationName, serverTypeCode, applicationNamespace);
         }
-        if (requestId != null && requestId.isSet()) {
+        if (header != null && requestId != null && requestId.isSet()) {
             clientHeaderAdaptor.setHeader(header, Header.HTTP_REQUEST_ID.toString(), requestId.toId());
         }
     }
