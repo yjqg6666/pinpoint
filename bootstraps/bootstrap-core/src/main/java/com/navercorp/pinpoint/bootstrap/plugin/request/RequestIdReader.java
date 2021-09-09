@@ -33,13 +33,11 @@ public class RequestIdReader<T> {
     private final PLogger logger = PLoggerFactory.getLogger(this.getClass());
     private final boolean isDebug = logger.isDebugEnabled();
 
-    private final TraceContext traceContext;
     private final RequestAdaptor<T> requestAdaptor;
     private final boolean enabled;
 
 
     public RequestIdReader(final TraceContext traceContext, RequestAdaptor<T> requestAdaptor) {
-        this.traceContext = Objects.requireNonNull(traceContext, "traceContext");
         this.requestAdaptor = Objects.requireNonNull(requestAdaptor, "requestAdaptor");
         this.enabled = traceContext.getProfilerConfig().readBoolean("profiler.requestId.enable", false);
     }
