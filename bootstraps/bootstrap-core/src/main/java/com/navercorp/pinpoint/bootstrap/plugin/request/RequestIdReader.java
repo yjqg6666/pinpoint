@@ -35,11 +35,15 @@ public class RequestIdReader<T> {
 
     private final RequestAdaptor<T> requestAdaptor;
     private final boolean enabled;
+    private final String externalHeader;
+    private final boolean externalHeaderEnabled;
 
 
     public RequestIdReader(final TraceContext traceContext, RequestAdaptor<T> requestAdaptor) {
         this.requestAdaptor = Objects.requireNonNull(requestAdaptor, "requestAdaptor");
         this.enabled = traceContext.getProfilerConfig().readBoolean("profiler.requestId.enable", false);
+        this.externalHeader = traceContext.getProfilerConfig().readString("profiler.requestId.externalHeader", null);
+        this.externalHeaderEnabled = StringUtils.hasText(this.externalHeader);
     }
 
 
@@ -59,6 +63,12 @@ public class RequestIdReader<T> {
         String requestId = requestAdaptor.getHeader(request, Header.HTTP_REQUEST_ID.toString());
         if (isDebug) {
             logger.debug("Get request id {} from request header.", requestId);
+        }
+        if (externalHeaderEnabled && !StringUtils.hasText(requestId)) {
+            requestId = requestAdaptor.getHeader(request, externalHeader);
+            if (isDebug) {
+                logger.debug("Get request id {} from external request header:{}.", requestId, externalHeader);
+            }
         }
         if (!StringUtils.hasText(requestId)) {
             requestId = UUID.randomUUID().toString();
