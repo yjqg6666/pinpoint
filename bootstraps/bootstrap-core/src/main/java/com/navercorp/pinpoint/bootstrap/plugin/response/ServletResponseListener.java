@@ -16,7 +16,9 @@
 
 package com.navercorp.pinpoint.bootstrap.plugin.response;
 
+import com.navercorp.pinpoint.bootstrap.config.ProfilerConfig;
 import com.navercorp.pinpoint.bootstrap.context.MethodDescriptor;
+import com.navercorp.pinpoint.bootstrap.context.RequestId;
 import com.navercorp.pinpoint.bootstrap.context.SpanRecorder;
 import com.navercorp.pinpoint.bootstrap.context.Trace;
 import com.navercorp.pinpoint.bootstrap.context.TraceContext;
@@ -38,13 +40,23 @@ public class ServletResponseListener<RESP> {
     private final TraceContext traceContext;
     private final ServerResponseHeaderRecorder<RESP> serverResponseHeaderRecorder;
     private final HttpStatusCodeRecorder httpStatusCodeRecorder;
+    private final ResponseAdaptor<RESP> responseAdaptor;
+
+    private final boolean responseRequestId;
+    private final String responseRequestIdHeaderName;
 
     public ServletResponseListener(final TraceContext traceContext,
                                    final ServerResponseHeaderRecorder<RESP> serverResponseHeaderRecorder,
-                                  final HttpStatusCodeRecorder httpStatusCodeRecorder) {
+                                  final HttpStatusCodeRecorder httpStatusCodeRecorder,
+                                   final ResponseAdaptor<RESP> responseAdaptor) {
         this.traceContext = Objects.requireNonNull(traceContext, "traceContext");
         this.serverResponseHeaderRecorder = Objects.requireNonNull(serverResponseHeaderRecorder, "serverResponseHeaderRecorder");
         this.httpStatusCodeRecorder = Objects.requireNonNull(httpStatusCodeRecorder, "statusCodeRecorder");
+
+        this.responseAdaptor = responseAdaptor;
+        final ProfilerConfig config = traceContext.getProfilerConfig();
+        this.responseRequestId = config.readBoolean("profiler.http.response.requestId.enable", false);
+        this.responseRequestIdHeaderName = config.readString("profiler.http.response.requestId.headerName", "X-Request-Id");
     }
 
 
@@ -55,6 +67,9 @@ public class ServletResponseListener<RESP> {
 
         if (isDebug) {
             logger.debug("Initialized responseEvent. response={}, serviceType={}, methodDescriptor={}", response, serviceType, methodDescriptor);
+        }
+        if (responseRequestId) {
+            setResponseRequestIdHeader(response);
         }
     }
 
@@ -74,6 +89,23 @@ public class ServletResponseListener<RESP> {
             final SpanRecorder spanRecorder = trace.getSpanRecorder();
             this.httpStatusCodeRecorder.record(spanRecorder, statusCode);
             this.serverResponseHeaderRecorder.recordHeader(spanRecorder, response);
+        }
+    }
+
+    private void setResponseRequestIdHeader(RESP response) {
+        final Trace trace = this.traceContext.currentRawTraceObject();
+        if (trace == null) {
+            return;
+        }
+        final RequestId requestId = trace.getRequestId();
+        if (requestId == null || !requestId.isSet()) {
+            return;
+        }
+        final String reqId = requestId.toId();
+        try {
+            this.responseAdaptor.setHeader(response, this.responseRequestIdHeaderName, reqId);
+        } catch (Exception e) {
+            logger.warn("Set request id header failed, pReqId:{}", reqId, e);
         }
     }
 
