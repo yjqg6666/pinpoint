@@ -73,12 +73,6 @@ public class ServletResponseListener<RESP> {
         if (isDebug) {
             logger.debug("Initialized responseEvent. response={}, serviceType={}, methodDescriptor={}", response, serviceType, methodDescriptor);
         }
-        if (responseTraceId) {
-            setResponseTraceIdHeader(response);
-        }
-        if (responseRequestId) {
-            setResponseRequestIdHeader(response);
-        }
     }
 
     public void destroyed(RESP response, final Throwable throwable, final int statusCode) {
@@ -98,11 +92,18 @@ public class ServletResponseListener<RESP> {
             this.httpStatusCodeRecorder.record(spanRecorder, statusCode);
             this.serverResponseHeaderRecorder.recordHeader(spanRecorder, response);
         }
+
+        if (responseTraceId) {
+            setResponseTraceIdHeader(trace, response);
+        }
+        if (responseRequestId) {
+            setResponseRequestIdHeader(trace, response);
+        }
+
     }
 
-    private void setResponseTraceIdHeader(RESP response) {
-        final Trace trace = this.traceContext.currentTraceObject();
-        if (trace == null) {
+    private void setResponseTraceIdHeader(Trace trace, RESP response) {
+        if (trace == null || !trace.canSampled()) {
             return;
         }
         TraceId traceId = trace.getTraceId();
@@ -117,8 +118,7 @@ public class ServletResponseListener<RESP> {
         }
     }
 
-    private void setResponseRequestIdHeader(RESP response) {
-        final Trace trace = this.traceContext.currentRawTraceObject();
+    private void setResponseRequestIdHeader(Trace trace, RESP response) {
         if (trace == null) {
             return;
         }
