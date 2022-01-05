@@ -116,13 +116,13 @@ public class HttpMethodBaseExecuteMethodInterceptor implements AroundInterceptor
             logger.beforeInterceptor(target, args);
         }
 
+        final HttpMethod httpMethod = getHttpMethod(target);
+        applicationInfoSender.sendCallerApplicationName(httpMethod);
+
         final Trace trace = traceContext.currentRawTraceObject();
         if (trace == null) {
             return;
         }
-
-        final HttpMethod httpMethod = getHttpMethod(target);
-        applicationInfoSender.sendCallerApplicationName(httpMethod);
 
         if (!trace.canSampled()) {
             if (httpMethod != null) {
