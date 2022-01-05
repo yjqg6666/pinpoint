@@ -107,13 +107,13 @@ public class HttpRequestExecutorExecuteMethodInterceptor implements AroundInterc
             logger.beforeInterceptor(target, args);
         }
 
+        final HttpRequest httpRequest = getHttpRequest(args);
+        applicationInfoSender.sendCallerApplicationName(httpRequest);
+
         final Trace trace = traceContext.currentRawTraceObject();
         if (trace == null) {
             return;
         }
-
-        final HttpRequest httpRequest = getHttpRequest(args);
-        applicationInfoSender.sendCallerApplicationName(httpRequest);
 
         final NameIntValuePair<String> host = getHost();
         final boolean sampling = trace.canSampled();

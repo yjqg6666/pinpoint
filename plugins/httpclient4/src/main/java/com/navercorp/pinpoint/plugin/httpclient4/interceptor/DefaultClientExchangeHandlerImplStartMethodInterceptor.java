@@ -103,13 +103,13 @@ public class DefaultClientExchangeHandlerImplStartMethodInterceptor implements A
             logger.beforeInterceptor(target, args);
         }
 
+        final HttpRequest httpRequest = getHttpRequest(target);
+        this.applicationInfoSender.sendCallerApplicationName(httpRequest);
+
         final Trace trace = traceContext.currentRawTraceObject();
         if (trace == null) {
             return;
         }
-
-        final HttpRequest httpRequest = getHttpRequest(target);
-        this.applicationInfoSender.sendCallerApplicationName(httpRequest);
 
         final NameIntValuePair<String> host = getHost(target);
         final boolean sampling = trace.canSampled();
