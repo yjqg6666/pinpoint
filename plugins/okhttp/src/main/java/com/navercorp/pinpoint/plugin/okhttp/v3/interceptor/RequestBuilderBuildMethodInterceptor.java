@@ -66,18 +66,19 @@ public class RequestBuilderBuildMethodInterceptor implements AroundInterceptor {
             logger.beforeInterceptor(target, args);
         }
 
+        if (!(target instanceof Request.Builder)) {
+            return;
+        }
+
+        final Request.Builder builder = ((Request.Builder) target);
+        applicationInfoSender.sendCallerApplicationName(builder);
+
         final Trace trace = traceContext.currentRawTraceObject();
         if (trace == null) {
             return;
         }
 
         try {
-            if (!(target instanceof Request.Builder)) {
-                return;
-            }
-
-            final Request.Builder builder = ((Request.Builder) target);
-            applicationInfoSender.sendCallerApplicationName(builder);
 
             if (!trace.canSampled()) {
                 this.requestTraceWriter.write(builder);
