@@ -87,17 +87,17 @@ public class ExecuteInterceptor implements AroundInterceptor {
             logger.beforeInterceptor(target, args);
         }
 
-        final Trace trace = traceContext.currentRawTraceObject();
-        if (trace == null) {
-            return;
-        }
-
         if (!validate(args)) {
             return;
         }
 
         final Request httpRequest = (Request) args[0];
         applicationInfoSender.sendCallerApplicationName(httpRequest);
+
+        final Trace trace = traceContext.currentRawTraceObject();
+        if (trace == null) {
+            return;
+        }
 
         final boolean sampling = trace.canSampled();
         if (!sampling) {
