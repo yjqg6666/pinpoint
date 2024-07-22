@@ -71,6 +71,17 @@ public class ServletResponseListener<RESP> {
             // An error may occur when the response variable is output to the log.
             logger.debug("Initialized responseEvent. serviceType={}, methodDescriptor={}", serviceType, methodDescriptor);
         }
+
+        final Trace trace = this.traceContext.currentRawTraceObject();
+        if (trace == null) {
+            return;
+        }
+        if (responseTraceId) {
+            setResponseTraceIdHeader(trace, response);
+        }
+        if (responseRequestId) {
+            setResponseRequestIdHeader(trace, response);
+        }
     }
 
     public void destroyed(RESP response, final Throwable throwable, final int statusCode) {
@@ -90,14 +101,6 @@ public class ServletResponseListener<RESP> {
             final SpanRecorder spanRecorder = trace.getSpanRecorder();
             this.serverResponseHeaderRecorder.recordHeader(spanRecorder, response);
         }
-
-        if (responseTraceId) {
-            setResponseTraceIdHeader(trace, response);
-        }
-        if (responseRequestId) {
-            setResponseRequestIdHeader(trace, response);
-        }
-
     }
 
     private void setResponseTraceIdHeader(Trace trace, RESP response) {
