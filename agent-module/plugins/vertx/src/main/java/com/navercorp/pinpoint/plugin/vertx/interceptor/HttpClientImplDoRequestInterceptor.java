@@ -23,8 +23,10 @@ import com.navercorp.pinpoint.bootstrap.context.TraceContext;
 import com.navercorp.pinpoint.bootstrap.interceptor.ApiIdAwareAroundInterceptor;
 import com.navercorp.pinpoint.bootstrap.logging.PluginLogManager;
 import com.navercorp.pinpoint.bootstrap.logging.PluginLogger;
+import com.navercorp.pinpoint.bootstrap.plugin.request.ApplicationInfoSender;
 import com.navercorp.pinpoint.bootstrap.plugin.request.ClientHeaderAdaptor;
 import com.navercorp.pinpoint.bootstrap.plugin.request.DefaultRequestTraceWriter;
+import com.navercorp.pinpoint.bootstrap.plugin.request.DefaultApplicationInfoSender;
 import com.navercorp.pinpoint.bootstrap.plugin.request.RequestTraceWriter;
 import com.navercorp.pinpoint.common.plugin.util.HostAndPort;
 import com.navercorp.pinpoint.common.trace.AnnotationKey;
@@ -42,11 +44,13 @@ public class HttpClientImplDoRequestInterceptor implements ApiIdAwareAroundInter
 
     private final TraceContext traceContext;
     private final RequestTraceWriter<HttpClientRequest> requestTraceWriter;
+    private final ApplicationInfoSender<HttpClientRequest> applicationInfoSender;
 
     public HttpClientImplDoRequestInterceptor(TraceContext traceContext) {
         this.traceContext = traceContext;
         ClientHeaderAdaptor<HttpClientRequest> clientHeaderAdaptor = new HttpClientRequestClientHeaderAdaptor();
         this.requestTraceWriter = new DefaultRequestTraceWriter<>(clientHeaderAdaptor, traceContext);
+        this.applicationInfoSender = new DefaultApplicationInfoSender<>(clientHeaderAdaptor, traceContext);
     }
 
     @Override
@@ -80,6 +84,7 @@ public class HttpClientImplDoRequestInterceptor implements ApiIdAwareAroundInter
                 resultToRequest = (HttpClientRequest) result;
             }
             final HttpClientRequest request = resultToRequest;
+            applicationInfoSender.sendCallerApplicationName(request);
             final SpanEventRecorder recorder = trace.currentSpanEventRecorder();
 
             if (request != null) {
