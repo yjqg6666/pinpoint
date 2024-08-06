@@ -1,0 +1,31 @@
+#!/bin/sh
+
+vfile="./target/build.info"
+test ! -f "$vfile" && echo "build.info file do NOT exist, exit" && exit 128
+ver=$(grep 'build.version' "$vfile" |cut -d'=' -f2)
+
+tmp=$(mktemp -d --suffix=.pp)
+targz="pinpoint-agent-${ver}.tar.gz"
+cp "./target/${targz}" "$tmp"
+pushd "$tmp"
+tar xzvf "${targz}"
+mv "pinpoint-agent-${ver}" pinpoint-agent
+nfile="pinpoint-agent.tgz"
+tar czvf "$nfile" pinpoint-agent
+popd
+cp "${tmp}/${nfile}" ./target/
+rm -rf "${tmp}"
+
+
+name=docker.io/yjqg6666/pinpoint-agent
+tag=3.0.0c6
+full="${name}:${tag}"
+podman manifest rm "$full"
+podman manifest create "$full"
+for r in arm64 amd64;do
+  echo $r
+  podman build -f Dockerfile.agent-download --platform "linux/$r" --layers=false -t "${full}-${r}" .
+  podman push "${full}-${r}"
+  podman manifest add "$full" "${full}-${r}"
+done
+podman manifest push --all  "$full" "docker://${full}"
