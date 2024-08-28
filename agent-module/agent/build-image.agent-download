@@ -1,24 +1,29 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 vfile="./target/build.info"
 test ! -f "$vfile" && echo "build.info file do NOT exist, exit" && exit 128
 ver=$(grep 'build.version' "$vfile" |cut -d'=' -f2)
+tag=$(grep 'git.tags' "$vfile" |cut -d'=' -f2)
 
 tmp=$(mktemp -d --suffix=.pp)
-targz="pinpoint-agent-${ver}.tar.gz"
+dname="pinpoint-agent"
+targz="${dname}-${ver}.tar.gz"
 cp "./target/${targz}" "$tmp"
 pushd "$tmp"
 tar xzvf "${targz}"
-mv "pinpoint-agent-${ver}" pinpoint-agent
-nfile="pinpoint-agent.tgz"
-tar czvf "$nfile" pinpoint-agent
+mv "${dname}-${ver}" "$dname"
+
+chown -R 1001:1001 "$dname"
+
+sed -i -e "s/git.commit.id.abbrev=.*/git.commit.id.abbrev=${cver}/" "${dname}/build.info"
+
+nfile="${dname}.tgz"
+tar czvf "$nfile" "$dname"
 popd
 cp "${tmp}/${nfile}" ./target/
 rm -rf "${tmp}"
 
-
 name=docker.io/yjqg6666/pinpoint-agent
-tag=3.0.0c6
 full="${name}:${tag}"
 podman manifest rm "$full"
 podman manifest create "$full"
