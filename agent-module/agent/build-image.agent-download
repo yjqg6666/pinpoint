@@ -4,6 +4,7 @@ vfile="./target/build.info"
 test ! -f "$vfile" && echo "build.info file do NOT exist, exit" && exit 128
 ver=$(grep 'build.version' "$vfile" |cut -d'=' -f2)
 tag=$(grep 'git.tags' "$vfile" |cut -d'=' -f2)
+cver=$(echo "$tag" |sed -e "s/${ver}//")
 
 tmp=$(mktemp -d --suffix=.pp)
 dname="pinpoint-agent"
