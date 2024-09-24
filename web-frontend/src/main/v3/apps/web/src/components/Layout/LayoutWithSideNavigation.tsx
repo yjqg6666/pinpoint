@@ -38,6 +38,7 @@ export const LayoutWithSideNavigation = ({ ...props }: LayoutWithSideNavigationP
       name: 'Inspector',
       path: APP_PATH.INSPECTOR,
       href: getInspectorPath(application, searchParameters),
+      hide: !configuration?.showV3Inspector,
     },
     {
       icon: <FaChartBar />,
